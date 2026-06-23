@@ -23,6 +23,8 @@ const io = socketIo(server, {
 
 // Importar rutas
 const authRoutes = require('./routes/auth');
+const userRoutes = require('./routes/users');
+const followRoutes = require('./routes/follows');
 const errorHandler = require('./middleware/errorHandler');
 
 // Middleware
@@ -60,6 +62,19 @@ app.get('/api', (req, res) => {
         login: 'POST /api/auth/login',
         me: 'GET /api/auth/me (protegido)',
         logout: 'POST /api/auth/logout (protegido)'
+      },
+      users: {
+        search: 'GET /api/users/search?q=username',
+        getProfile: 'GET /api/users/:id',
+        getVideos: 'GET /api/users/:id/videos',
+        getFollowers: 'GET /api/users/:id/followers',
+        getFollowing: 'GET /api/users/:id/following',
+        updateProfile: 'PUT /api/users/:id (protegido)'
+      },
+      follows: {
+        follow: 'POST /api/follows/:userId (protegido)',
+        unfollow: 'DELETE /api/follows/:userId (protegido)',
+        checkFollowing: 'GET /api/follows/:userId/check (protegido)'
       }
     }
   });
@@ -67,6 +82,12 @@ app.get('/api', (req, res) => {
 
 // Rutas de autenticación
 app.use('/api/auth', authRoutes);
+
+// Rutas de usuarios
+app.use('/api/users', userRoutes);
+
+// Rutas de seguimiento
+app.use('/api/follows', followRoutes);
 
 // Socket.io - Eventos en tiempo real
 io.on('connection', (socket) => {
