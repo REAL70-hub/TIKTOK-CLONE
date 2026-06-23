@@ -1,0 +1,117 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        Int       @id @default(autoincrement())
+  email     String    @unique
+  username  String    @unique
+  password  String
+  avatar    String?   @default("https://via.placeholder.com/150")
+  bio       String?   @default("")
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  // Relaciones
+  videos    Video[]
+  comments  Comment[]
+  likes     Like[]
+  following Follow[]   @relation("following")
+  followers Follow[]   @relation("followers")
+  sentMessages     Message[] @relation("sender")
+  receivedMessages Message[] @relation("receiver")
+
+  @@index([email])
+  @@index([username])
+}
+
+model Video {
+  id          Int       @id @default(autoincrement())
+  title       String    @db.VarChar(200)
+  description String?   @db.Text
+  videoUrl    String
+  thumbnail   String?
+  views       Int       @default(0)
+  duration    Int?      // duracion en segundos
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  // Relaciones
+  author      User      @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  authorId    Int
+  comments    Comment[]
+  likes       Like[]
+
+  @@index([authorId])
+  @@index([createdAt])
+}
+
+model Comment {
+  id        Int       @id @default(autoincrement())
+  content   String    @db.Text
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  // Relaciones
+  author    User      @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  authorId  Int
+  video     Video     @relation(fields: [videoId], references: [id], onDelete: Cascade)
+  videoId   Int
+
+  @@index([authorId])
+  @@index([videoId])
+}
+
+model Like {
+  id        Int       @id @default(autoincrement())
+  createdAt DateTime  @default(now())
+
+  // Relaciones
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId    Int
+  video     Video     @relation(fields: [videoId], references: [id], onDelete: Cascade)
+  videoId   Int
+
+  @@unique([userId, videoId])
+  @@index([userId])
+  @@index([videoId])
+}
+
+model Follow {
+  id          Int       @id @default(autoincrement())
+  createdAt   DateTime  @default(now())
+
+  // Relaciones
+  follower    User      @relation("followers", fields: [followerId], references: [id], onDelete: Cascade)
+  followerId  Int
+  following   User      @relation("following", fields: [followingId], references: [id], onDelete: Cascade)
+  followingId Int
+
+  @@unique([followerId, followingId])
+  @@index([followerId])
+  @@index([followingId])
+}
+
+model Message {
+  id        Int       @id @default(autoincrement())
+  content   String    @db.Text
+  createdAt DateTime  @default(now())
+
+  // Relaciones
+  sender    User      @relation("sender", fields: [senderId], references: [id], onDelete: Cascade)
+  senderId  Int
+  receiver  User      @relation("receiver", fields: [receiverId], references: [id], onDelete: Cascade)
+  receiverId Int
+
+  @@index([senderId])
+  @@index([receiverId])
+  @@index([createdAt])
+}
